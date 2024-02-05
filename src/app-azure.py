@@ -1,12 +1,22 @@
 # pip install streamlit langchain lanchain-openai beautifulsoup4 python-dotenv chromadb
 
+# # OpenAI API
+# # langchain
+# echo "OpenAI API variables ... "
+# PASS_PATH="azure/hypera/oai/gpt-4"
+# export OPENAI_API_TYPE="azure"
+# export AZURE_OPENAI_API_KEY="$(pass $PASS_PATH/token)"
+# export AZURE_OPENAI_ENDPOINT="$(pass $PASS_PATH/base)/"
+# export OPENAI_API_AZURE_ENGINE="$(pass $PASS_PATH/model)"
+# export OPENAI_API_VERSION="$(pass $PASS_PATH/api-version)"
+
 import os
 import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_openai import AzureOpenAIEmbeddings, ChatOpenAI
+from langchain_openai import AzureOpenAIEmbeddings, AzureChatOpenAI
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -35,7 +45,9 @@ def get_vectorstore_from_url(url):
 
 
 def get_context_retriever_chain(vector_store):
-    llm = ChatOpenAI()
+    llm = AzureChatOpenAI(
+        azure_deployment="gpt-4-32k"
+    )
 
     retriever = vector_store.as_retriever()
 
@@ -55,8 +67,9 @@ def get_context_retriever_chain(vector_store):
 
 
 def get_conversational_rag_chain(retriever_chain):
-
-    llm = ChatOpenAI()
+    llm = AzureChatOpenAI(
+        azure_deployment="gpt-4-32k"
+    )
 
     prompt = ChatPromptTemplate.from_messages([
       ("system", "Answer the user's questions based on the below context:\n\n{context}"),
@@ -75,7 +88,7 @@ def get_conversational_rag_chain(retriever_chain):
     )
 
 
-def get_response(user_input):
+def get_response(user_query):
     retriever_chain = get_context_retriever_chain(
         st.session_state.vector_store
     )
